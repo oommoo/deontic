@@ -31,6 +31,7 @@ C[claims] --> |refer| V[volumes]
 S[services] --> |have| P[pods]
 S[services] --> |have| I[ingress]
 D[deployments] --> |specify| S[services]
+```
 
 # Project Exemplar
 
@@ -54,3 +55,4 @@ If we want to learn more about creating good readme files then refer the followi
 - [ASP.NET Core](https://github.com/aspnet/Home)
 - [Visual Studio Code](https://github.com/Microsoft/vscode)
 - [Chakra Core](https://github.com/Microsoft/ChakraCore)
+
