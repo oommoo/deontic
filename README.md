@@ -31,8 +31,6 @@ C[claims] --> |refer| V[volumes]
 S[services] --> |have| P[pods]
 S[services] --> |have| I[ingress]
 D[deployments] --> |specify| S[services]
-```
-=======
 
 # Project Exemplar
 
