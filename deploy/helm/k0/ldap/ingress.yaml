@@ -1,0 +1,105 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-https
+  namespace: openldap
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ldap-admin-ingress
+  namespace: openldap
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`ldapadmin.ssigroup.io`)
+      kind: Rule
+      services:
+        - name: openldap-phpldapadmin
+          port: 80
+      middlewares:
+        - name: redirect-https
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ldap-admin-ingress-secure
+  namespace: openldap
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`ldapadmin.ssigroup.io`)
+      kind: Rule
+      services:
+        - name: openldap-phpldapadmin
+          port: 80
+  tls:
+    secretName: ldap-admin-ingress-cert
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ldap-admin-ingress-cert
+  namespace: openldap
+spec:
+  secretName: ldap-admin-ingress-cert
+  issuerRef:
+    name: step-issuer
+    kind: StepClusterIssuer
+    group: certmanager.step.sm
+  dnsNames:
+    - ldapadmin.ssigroup.io
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ldap-password-ingress
+  namespace: openldap
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`password.ssigroup.io`)
+      kind: Rule
+      services:
+        - name: openldap-ltb-passwd
+          port: 80
+      middlewares:
+        - name: redirect-https
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ldap-password-ingress-secure
+  namespace: openldap
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`password.ssigroup.io`)
+      kind: Rule
+      services:
+        - name: openldap-ltb-passwd
+          port: 80
+  tls:
+    secretName: ldap-password-ingress-cert
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ldap-password-ingress-cert
+  namespace: openldap
+spec:
+  secretName: ldap-password-ingress-cert
+  issuerRef:
+    name: step-issuer
+    kind: StepClusterIssuer
+    group: certmanager.step.sm
+  dnsNames:
+    - password.ssigroup.io
