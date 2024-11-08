@@ -1,0 +1,92 @@
+@startuml kubernetes
+
+footer Kubernetes Undercloud
+scale max 1024 width
+
+skinparam nodesep 10
+skinparam ranksep 10
+
+' Kubernetes
+!define KubernetesPuml https://raw.githubusercontent.com/dcasati/kubernetes-PlantUML/master/dist
+
+!includeurl KubernetesPuml/kubernetes_Common.puml
+!includeurl KubernetesPuml/kubernetes_Context.puml
+!includeurl KubernetesPuml/kubernetes_Simplified.puml
+
+!includeurl KubernetesPuml/OSS/KubernetesSvc.puml
+!includeurl KubernetesPuml/OSS/KubernetesIng.puml
+!includeurl KubernetesPuml/OSS/KubernetesPod.puml
+!includeurl KubernetesPuml/OSS/KubernetesRs.puml
+!includeurl KubernetesPuml/OSS/KubernetesDeploy.puml
+!includeurl KubernetesPuml/OSS/KubernetesHpa.puml
+
+left to right direction
+
+' Kubernetes Components
+Cluster_Boundary(cluster, "Undercloud Cluster (k0)") {
+    Namespace_Boundary(ns_argocd, "argocd") {
+        KubernetesIng(ing_argocd, "argocd.sssigroup.io", "")
+	    KubernetesSvc(svc_argocd_server, "service", "")
+		KubernetesPod(acd1, "argocd-service", "")
+    }
+    Namespace_Boundary(ns_kc, "keycloak") {
+        KubernetesIng(ingress, "sso.sssigroup.io", "")
+	    KubernetesSvc(svc, "service", "")
+	    KubernetesPod(uc1, "undercloud-1", "")
+	    KubernetesPod(uc2, "undercloud-2", "")
+	    KubernetesPod(uc3, "undercloud-3", "")
+	    KubernetesDeploy(kco,"keycloak-operator","")
+    }
+    Namespace_Boundary(ns_pg, "postgres") {
+	    KubernetesSvc(svc_lb_pg, "loadbalancer", "")
+	    KubernetesSvc(svc_pg_rw, "pooler-rw", "")
+	    KubernetesSvc(svc_pg_ro, "replica-ro", "")
+	    KubernetesDeploy(dpl_pg,"undercloud-cluster","")
+	    KubernetesPod(pg1, "pg-primary", "")
+	    KubernetesPod(pg2, "pg-replica", "")
+	    KubernetesPod(pg3, "pg-replica", "")
+	    KubernetesDeploy(pgo,"postgres-operator","")
+    }
+    Namespace_Boundary(ns_ld, "openldap") {
+        KubernetesIng(ing_ld, "ldaps.sssigroup.io", "")
+	    KubernetesSvc(svc_ld, "loadbalancer-ldap", "")
+	    KubernetesPod(ld1, "ld-primary", "")
+	    KubernetesPod(ld2, "ld-secondary", "")
+	    KubernetesPod(ld3, "ld-secondary", "")
+	    KubernetesDeploy(ldo,"ldap-operator","")
+    }
+}
+
+' dependencies
+Rel(ing_argocd,svc_argocd_server,"")
+Rel(svc_argocd_server, acd1, "")
+Rel(acd1, ingress, "redirect")
+Rel(ingress, acd1, "redirect")
+
+Rel(ingress,svc,"")
+Rel(svc, uc1, "")
+Rel(svc, uc2, "")
+Rel(svc, uc3, "")
+
+Rel(uc1, svc_pg_rw, "persists")
+Rel(uc2, svc_pg_rw, "persists")
+Rel(uc3, svc_pg_rw, "persists")
+
+Rel( svc_lb_pg, svc_pg_rw, "selects") 
+Rel(svc_pg_rw, pg1, "routes")
+Rel(svc_pg_ro, pg2, "routes")
+Rel(svc_pg_ro, pg3, "routes")
+
+Rel(pg1, pg2, "logs")
+Rel(pg1, pg3, "logs")
+
+Rel(ing_ld, svc_ld, "permits")
+Rel(uc1, svc_ld, "search")
+Rel(uc2, svc_ld, "search")
+Rel(uc3, svc_ld, "search")
+
+Rel(svc_ld, ld1, "routes")
+Rel(svc_ld, ld2, "routes")
+Rel(svc_ld, ld3, "routes")
+
+@enduml
